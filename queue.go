@@ -27,15 +27,22 @@ func (q *messageQueue) enqueue(message Message) {
 	q.messages = append(q.messages, message)
 }
 
-func (q *messageQueue) dequeue() (Message, error) {
+// dequeue returns the next Message on the queue
+// and subsequently removes it from the queue.
+// dequeue can panic if messageQueue is empty, so check isEmpty
+func (q *messageQueue) dequeue() Message {
 	q.mu.Lock()
 	defer q.mu.Unlock()
 
 	if len(q.messages) == 0 {
-		return Message{}, errQueueEmpty
+		panic("queue is empty")
 	}
 
 	message := q.messages[0]
 	q.messages = q.messages[1:]
-	return message, nil
+	return message
+}
+
+func (q *messageQueue) isEmpty() bool {
+	return q.size == 0
 }

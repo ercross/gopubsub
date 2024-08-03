@@ -117,7 +117,7 @@ func (mb *MessageBroker) Unsubscribe(subscriber *Subscriber) {
 	// remove subscriber from all topics subscribed
 	mb.topicSubscribers.mu.Lock()
 	defer mb.topicSubscribers.mu.Unlock()
-	for topic, _ := range subscriber.topics {
+	for topic := range subscriber.topics {
 		if topicSubscribers, ok := mb.topicSubscribers.entries[topic]; ok {
 			reducedSubscribers := make([]*Subscriber, 0, len(topicSubscribers))
 			for _, topicSubscriber := range topicSubscribers {
@@ -138,11 +138,11 @@ func (mb *MessageBroker) Publish(message Message) error {
 	go mb.buffer.enqueue(message)
 
 	// publish the next message from the queue
-	qm, err := mb.buffer.dequeue()
-	if err != nil {
-		return err
+	if mb.buffer.isEmpty() {
+		return nil
 	}
 
+	qm := mb.buffer.dequeue()
 	mb.topicSubscribers.mu.RLock()
 	defer mb.topicSubscribers.mu.RUnlock()
 
